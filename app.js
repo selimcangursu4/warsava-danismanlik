@@ -1284,6 +1284,15 @@ function initNavigation() {
     navMenu.classList.toggle('open');
   });
 
+  // Dedicated close (X) button inside the mobile drawer itself
+  const navMenuClose = document.querySelector('.nav-menu-close');
+  if (navMenuClose) {
+    navMenuClose.addEventListener('click', () => {
+      mobileToggle.classList.remove('open');
+      navMenu.classList.remove('open');
+    });
+  }
+
   // Close mobile navigation menu on clicking a nav link
   navLinks.forEach(link => {
     link.addEventListener('click', () => {

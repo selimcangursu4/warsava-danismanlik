@@ -275,7 +275,17 @@ body {
 
 .nav-menu {
   display: flex;
+  align-items: center;
+}
+
+.nav-menu-links {
+  display: flex;
   gap: 30px;
+}
+
+.nav-menu-close,
+.nav-menu-info {
+  display: none;
 }
 
 .nav-link {
@@ -1371,24 +1381,129 @@ body {
     position: fixed;
     top: 0;
     right: -100%;
-    width: 80%;
+    width: 85%;
+    max-width: 340px;
     height: 100vh;
-    background: rgba(10, 17, 40, 0.95);
+    background: rgba(9, 16, 38, 0.98);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 40px;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
     z-index: 999;
     transition: var(--transition-smooth);
     border-left: 1px solid var(--border-gold);
+    overflow-y: auto;
+    padding: 90px 28px 40px 28px;
   }
-  
+
   .nav-menu.open {
     right: 0;
   }
-  
+
+  .nav-menu-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-white);
+    color: var(--text-white);
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .nav-menu-close:hover {
+    color: var(--accent-gold);
+    border-color: var(--border-gold);
+  }
+
+  .nav-menu-links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 26px;
+    margin-bottom: 36px;
+  }
+
+  .nav-menu-info {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border-white);
+  }
+
+  .nav-menu-company {
+    font-family: var(--font-secondary);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text-white);
+  }
+
+  .nav-menu-contact-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .nav-menu-contact-list li,
+  .nav-menu-contact-list a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-gray);
+    font-size: 13.5px;
+    text-decoration: none;
+    transition: var(--transition-fast);
+  }
+
+  .nav-menu-contact-list a:hover {
+    color: var(--accent-gold);
+  }
+
+  .nav-menu-contact-list i {
+    width: 16px;
+    flex-shrink: 0;
+    text-align: center;
+    color: var(--accent-gold);
+    font-size: 14px;
+  }
+
+  .nav-menu-whatsapp-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 14px 20px;
+    background: #25D366;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3);
+    transition: var(--transition-fast);
+  }
+
+  .nav-menu-whatsapp-btn:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+  }
+
+  .nav-menu-whatsapp-btn i {
+    font-size: 18px;
+  }
+
   .mobile-nav-toggle.open span:nth-child(1) {
     transform: rotate(45deg) translate(5px, 6px);
   }
