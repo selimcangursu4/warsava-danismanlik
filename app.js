@@ -8,6 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 document.addEventListener('DOMContentLoaded', () => {
   initThree();
   initNavigation();
+  initMobileEdgeSwipeNavigation();
   initVideoSlider();
   initVideoModal();
   initVideoHoverPreviews();
@@ -1169,6 +1170,63 @@ function initNavigation() {
       });
     });
   });
+}
+
+/**
+ * On mobile, a touch starting in the top or bottom edge strip of the screen
+ * jumps straight to the adjacent section, bypassing that section's own
+ * scrollable content. A touch starting in the middle scrolls the section's
+ * content natively instead (chaining to the next section only once that
+ * inner scroll is exhausted, regardless of where the following swipe starts -
+ * see the overscroll-behavior-y: contain rule on .section in style.css).
+ */
+function initMobileEdgeSwipeNavigation() {
+  const EDGE_RATIO = 0.15; // top/bottom 15% of the viewport counts as an edge
+  const AXIS_LOCK_DISTANCE = 10; // px of movement before we commit to vertical vs horizontal
+  const SWIPE_THRESHOLD = 40; // px of vertical movement to count as a deliberate swipe
+
+  let startX = 0;
+  let startY = 0;
+  let active = false; // touch started in an edge zone
+  let axisLocked = false;
+  let handled = false;
+
+  document.addEventListener('touchstart', (e) => {
+    if (window.innerWidth >= 768) return;
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    handled = false;
+    axisLocked = false;
+    const edgeSize = window.innerHeight * EDGE_RATIO;
+    active = startY <= edgeSize || startY >= window.innerHeight - edgeSize;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (window.innerWidth >= 768 || !active || handled) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = startY - touch.clientY;
+
+    if (!axisLocked) {
+      if (Math.abs(deltaX) < AXIS_LOCK_DISTANCE && Math.abs(deltaY) < AXIS_LOCK_DISTANCE) return;
+      axisLocked = true;
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        active = false; // horizontal gesture (e.g. the video slider) - leave it alone
+        return;
+      }
+    }
+
+    // Block the section's own scroll and the page scroll while we own this gesture
+    e.preventDefault();
+    if (Math.abs(deltaY) < SWIPE_THRESHOLD) return;
+
+    handled = true;
+    const direction = deltaY > 0 ? 1 : -1; // swipe up -> next section, swipe down -> previous
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const targetScrollY = Math.min(Math.max(window.scrollY + direction * window.innerHeight, 0), maxScroll);
+    window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+  }, { passive: false });
 }
 
 /**
