@@ -8,7 +8,8 @@ gsap.registerPlugin(ScrollTrigger);
 document.addEventListener('DOMContentLoaded', () => {
   initThree();
   initNavigation();
-  initMobileEdgeSwipeNavigation();
+  initMobileSectionScroll();
+  initConsultationForm();
   initVideoSlider();
   initVideoModal();
   initVideoHoverPreviews();
@@ -520,6 +521,52 @@ function initScrollTrigger() {
             onReverseComplete: () => { section.scrollTop = 0; }
           }, outTime);
           if (grid) tl.to(grid, { y: -50, scale: 0.95, opacity: 0, duration: 0.3 }, outTime);
+        }
+      } else if (index === sections.length - 1) {
+        // Last section (Footer): custom staggered reveal across the footer columns
+        // so arriving here from References feels like a deliberate entrance rather
+        // than an abrupt cut (the generic single 0.2s container fade was too quick
+        // to notice on this section).
+        const inTimeFooter = index + 0.15; // exactly when the previous section exits
+
+        tl.fromTo(section,
+          { opacity: 0, pointerEvents: "none" },
+          { opacity: 1, pointerEvents: "auto", duration: 0.3 },
+          inTimeFooter
+        );
+
+        const footerBrand = section.querySelector('.footer-brand');
+        const footerContact = section.querySelector('.footer-contact');
+        const footerLinks = section.querySelector('.footer-links');
+        const footerBottom = section.querySelector('.footer-bottom');
+
+        if (footerBrand) {
+          tl.fromTo(footerBrand,
+            { opacity: 0, y: 45, scale: 1.05 },
+            { opacity: 1, y: 0, scale: 1.0, duration: 0.45, ease: "power2.out" },
+            inTimeFooter
+          );
+        }
+        if (footerContact) {
+          tl.fromTo(footerContact,
+            { opacity: 0, y: 45, scale: 1.05 },
+            { opacity: 1, y: 0, scale: 1.0, duration: 0.45, ease: "power2.out" },
+            inTimeFooter + 0.1
+          );
+        }
+        if (footerLinks) {
+          tl.fromTo(footerLinks,
+            { opacity: 0, y: 45, scale: 1.05 },
+            { opacity: 1, y: 0, scale: 1.0, duration: 0.45, ease: "power2.out" },
+            inTimeFooter + 0.2
+          );
+        }
+        if (footerBottom) {
+          tl.fromTo(footerBottom,
+            { opacity: 0, y: 20 },
+            { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" },
+            inTimeFooter + 0.35
+          );
         }
       } else {
         // Generic animation loop for other sections
@@ -1173,60 +1220,101 @@ function initNavigation() {
 }
 
 /**
- * On mobile, a touch starting in the top or bottom edge strip of the screen
- * jumps straight to the adjacent section, bypassing that section's own
- * scrollable content. A touch starting in the middle scrolls the section's
- * content natively instead (chaining to the next section only once that
- * inner scroll is exhausted, regardless of where the following swipe starts -
- * see the overscroll-behavior-y: contain rule on .section in style.css).
+ * Native scroll chaining between a section's own overflow content and the
+ * page scroll that drives section transitions isn't reliable on mobile
+ * touch (the sections live inside a position:fixed wrapper, which mobile
+ * browsers don't always chain through correctly) - a section's content could
+ * end up skipped before it was fully scrolled. So on mobile only, we drive
+ * both scrolls manually: a vertical drag first scrolls the active section's
+ * own content, and only once that content hits its start/end does the same
+ * drag continue on to move the page (which is what drives the section
+ * transition). Desktop mouse-wheel scrolling is left completely untouched.
  */
-function initMobileEdgeSwipeNavigation() {
-  const EDGE_RATIO = 0.15; // top/bottom 15% of the viewport counts as an edge
+function initMobileSectionScroll() {
   const AXIS_LOCK_DISTANCE = 10; // px of movement before we commit to vertical vs horizontal
-  const SWIPE_THRESHOLD = 40; // px of vertical movement to count as a deliberate swipe
 
   let startX = 0;
   let startY = 0;
-  let active = false; // touch started in an edge zone
+  let lastY = 0;
+  let activeSection = null;
   let axisLocked = false;
-  let handled = false;
+  let isVertical = false;
+  let pageMode = false; // once the inner section is exhausted, stay on page scroll for this gesture
 
   document.addEventListener('touchstart', (e) => {
     if (window.innerWidth >= 768) return;
     const touch = e.touches[0];
     startX = touch.clientX;
     startY = touch.clientY;
-    handled = false;
+    lastY = startY;
+    activeSection = e.target.closest('.section');
     axisLocked = false;
-    const edgeSize = window.innerHeight * EDGE_RATIO;
-    active = startY <= edgeSize || startY >= window.innerHeight - edgeSize;
+    isVertical = false;
+    pageMode = false;
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
-    if (window.innerWidth >= 768 || !active || handled) return;
+    if (window.innerWidth >= 768 || !activeSection) return;
     const touch = e.touches[0];
-    const deltaX = touch.clientX - startX;
-    const deltaY = startY - touch.clientY;
+    const currentY = touch.clientY;
 
     if (!axisLocked) {
+      const deltaX = touch.clientX - startX;
+      const deltaY = startY - currentY;
       if (Math.abs(deltaX) < AXIS_LOCK_DISTANCE && Math.abs(deltaY) < AXIS_LOCK_DISTANCE) return;
       axisLocked = true;
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        active = false; // horizontal gesture (e.g. the video slider) - leave it alone
-        return;
-      }
+      isVertical = Math.abs(deltaY) >= Math.abs(deltaX);
+      if (!isVertical) return; // horizontal gesture (e.g. the video slider) - leave it alone
+    }
+    if (!isVertical) return;
+
+    const delta = lastY - currentY; // positive = finger moving up = reveal content below
+    lastY = currentY;
+    e.preventDefault();
+
+    if (pageMode) {
+      window.scrollTo(window.scrollX, window.scrollY + delta);
+      return;
     }
 
-    // Block the section's own scroll and the page scroll while we own this gesture
-    e.preventDefault();
-    if (Math.abs(deltaY) < SWIPE_THRESHOLD) return;
+    const maxScrollTop = activeSection.scrollHeight - activeSection.clientHeight;
+    const atBottom = activeSection.scrollTop >= maxScrollTop - 1;
+    const atTop = activeSection.scrollTop <= 0;
 
-    handled = true;
-    const direction = deltaY > 0 ? 1 : -1; // swipe up -> next section, swipe down -> previous
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    const targetScrollY = Math.min(Math.max(window.scrollY + direction * window.innerHeight, 0), maxScroll);
-    window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+    if (delta > 0 && !atBottom) {
+      activeSection.scrollTop += delta;
+    } else if (delta < 0 && !atTop) {
+      activeSection.scrollTop += delta;
+    } else {
+      pageMode = true;
+      window.scrollTo(window.scrollX, window.scrollY + delta);
+    }
   }, { passive: false });
+}
+
+/**
+ * Builds a pre-filled WhatsApp message from the consultation form fields and
+ * opens it in a new tab instead of submitting the form anywhere.
+ */
+function initConsultationForm() {
+  const form = document.getElementById('consultation-form');
+  if (!form) return;
+
+  const WHATSAPP_NUMBER = '48731847745'; // +48 731 847 745
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('form-name').value.trim();
+    const serviceSelect = document.getElementById('form-service');
+    const service = serviceSelect.options[serviceSelect.selectedIndex].text;
+    const message = document.getElementById('form-message').value.trim();
+
+    const text = `Merhaba ismim ${name}. ${service} ilgileniyorum. ${message}`;
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+
+    window.open(whatsappUrl, '_blank');
+  });
 }
 
 /**
