@@ -212,8 +212,9 @@ function initScrollTrigger() {
     return;
   }
 
-  // Set body height dynamically based on sections + 1 substeps (8 sections + 1 substep = 900vh)
-  document.body.style.height = ((sections.length + 1) * 100) + 'vh';
+  // Set body height dynamically based on sections + 1 substeps (8 sections + 1 substep = 900vh),
+  // scaled up so each section takes more physical scroll distance to pass through (slower pacing).
+  document.body.style.height = ((sections.length + 1) * 140) + 'vh';
 
   // Master timeline linked to scroll
   const tl = gsap.timeline({
@@ -221,7 +222,7 @@ function initScrollTrigger() {
       trigger: "body",
       start: "top top",
       end: "bottom bottom",
-      scrub: 0.1, // Responsive scroll transition link
+      scrub: 0.8, // Smooths/lags the animation behind the scroll input for a slower, more fluid feel
       onUpdate: (self) => {
         // Update top scroll progress bar
         document.getElementById('scroll-progress-bar').style.width = (self.progress * 100) + '%';
