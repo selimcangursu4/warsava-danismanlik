@@ -379,7 +379,11 @@ function initScrollTrigger() {
 
       // Second scroll step (1.0 to 2.0): Hero elements fade out completely
       const outTime = 1.15;
-      tl.to(section, { opacity: 0, pointerEvents: "none", duration: 0.35 }, outTime);
+      tl.to(section, {
+        opacity: 0, pointerEvents: "none", duration: 0.35,
+        onComplete: () => { section.scrollTop = 0; },
+        onReverseComplete: () => { section.scrollTop = 0; }
+      }, outTime);
       if (companyName) tl.to(companyName, { [slideAxis]: slideOut, opacity: 0, duration: 0.3 }, outTime);
       if (title) tl.to(title, { [slideAxis]: slideOut, opacity: 0, duration: 0.3, ease: "power2.in" }, outTime);
       if (text) tl.to(text, { [slideAxis]: slideOut, opacity: 0, duration: 0.3, ease: "power2.in" }, outTime);
@@ -407,9 +411,9 @@ function initScrollTrigger() {
           const introTitle = headerIntro.querySelector('.section-title');
           const introSubtitle = headerIntro.querySelector('.section-subtitle');
 
-          tl.fromTo(headerIntro, 
-            { opacity: 0, y: 30, display: 'block' }, 
-            { opacity: 1, y: 0, display: 'block', duration: 0.3 }, 
+          tl.fromTo(headerIntro,
+            { opacity: 0, y: 30 },
+            { opacity: 1, y: 0, duration: 0.3 },
             inTimeCustom
           );
           if (introBadge) tl.fromTo(introBadge, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.25 }, inTimeCustom);
@@ -418,21 +422,26 @@ function initScrollTrigger() {
         }
 
         // Step 2: Fade-out header intro texts (from 3.45 to 3.65)
+        // Note: no display:none here on purpose - keeping it in-flow (just invisible)
+        // means Section 4's total scroll height stays constant from the moment the
+        // section becomes active, so mobile touch-scroll chaining into the services
+        // grid below works reliably even on fast flicks (a height that changes mid-scroll
+        // causes the browser to keep routing the scroll to the outer page instead).
         if (headerIntro) {
-          tl.to(headerIntro, { opacity: 0, y: -30, display: 'none', duration: 0.2 }, 3.45);
+          tl.to(headerIntro, { opacity: 0, y: -30, duration: 0.2 }, 3.45);
         }
 
         // Step 3: Fade-in cards grid and cards staggered (from 3.65 to 4.05)
         if (grid) {
-          tl.fromTo(grid, 
-            { opacity: 0, y: 40, display: 'none' }, 
-            { opacity: 1, y: 0, display: 'grid', duration: 0.3, ease: "power2.out" }, 
+          tl.fromTo(grid,
+            { opacity: 0, y: 40 },
+            { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
             3.65
           );
           if (cards.length > 0) {
-            tl.fromTo(cards, 
-              { opacity: 0, y: 30, scale: 1.03 }, 
-              { opacity: 1, y: 0, scale: 1.0, duration: 0.25, stagger: 0.03, ease: "power2.out" }, 
+            tl.fromTo(cards,
+              { opacity: 0, y: 30, scale: 1.03 },
+              { opacity: 1, y: 0, scale: 1.0, duration: 0.25, stagger: 0.03, ease: "power2.out" },
               3.68
             );
           }
@@ -441,7 +450,11 @@ function initScrollTrigger() {
         // Exit of Section 4
         if (index < sections.length - 1) {
           const outTime = index + 1.15; // 4.15
-          tl.to(section, { opacity: 0, pointerEvents: "none", duration: 0.35 }, outTime);
+          tl.to(section, {
+            opacity: 0, pointerEvents: "none", duration: 0.35,
+            onComplete: () => { section.scrollTop = 0; },
+            onReverseComplete: () => { section.scrollTop = 0; }
+          }, outTime);
           if (grid) tl.to(grid, { y: -50, scale: 0.95, opacity: 0, duration: 0.3 }, outTime);
         }
       } else if (index === 4) {
@@ -465,9 +478,9 @@ function initScrollTrigger() {
           const introTitle = headerIntro.querySelector('.section-title');
           const introSubtitle = headerIntro.querySelector('.section-subtitle');
 
-          tl.fromTo(headerIntro, 
-            { opacity: 0, y: 30, display: 'block' }, 
-            { opacity: 1, y: 0, display: 'block', duration: 0.3 }, 
+          tl.fromTo(headerIntro,
+            { opacity: 0, y: 30 },
+            { opacity: 1, y: 0, duration: 0.3 },
             inTimeCustom
           );
           if (introBadge) tl.fromTo(introBadge, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.25 }, inTimeCustom);
@@ -476,21 +489,22 @@ function initScrollTrigger() {
         }
 
         // Step 2: Fade-out header intro texts (from 4.45 to 4.65)
+        // No display:none here either - see the note on Section 4's headerIntro above.
         if (headerIntro) {
-          tl.to(headerIntro, { opacity: 0, y: -30, display: 'none', duration: 0.2 }, 4.45);
+          tl.to(headerIntro, { opacity: 0, y: -30, duration: 0.2 }, 4.45);
         }
 
         // Step 3: Fade-in timeline steps staggered (from 4.65 to 5.05)
         if (grid) {
           tl.fromTo(grid,
-            { opacity: 0, y: 40, display: 'none' },
-            { opacity: 1, y: 0, display: 'grid', duration: 0.3, ease: "power2.out" },
+            { opacity: 0, y: 40 },
+            { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
             4.65
           );
           if (cards.length > 0) {
-            tl.fromTo(cards, 
-              { opacity: 0, y: 30, scale: 1.03 }, 
-              { opacity: 1, y: 0, scale: 1.0, duration: 0.25, stagger: 0.03, ease: "power2.out" }, 
+            tl.fromTo(cards,
+              { opacity: 0, y: 30, scale: 1.03 },
+              { opacity: 1, y: 0, scale: 1.0, duration: 0.25, stagger: 0.03, ease: "power2.out" },
               4.68
             );
           }
@@ -499,7 +513,11 @@ function initScrollTrigger() {
         // Exit of Section 5
         if (index < sections.length - 1) {
           const outTime = index + 1.15; // 5.15
-          tl.to(section, { opacity: 0, pointerEvents: "none", duration: 0.35 }, outTime);
+          tl.to(section, {
+            opacity: 0, pointerEvents: "none", duration: 0.35,
+            onComplete: () => { section.scrollTop = 0; },
+            onReverseComplete: () => { section.scrollTop = 0; }
+          }, outTime);
           if (grid) tl.to(grid, { y: -50, scale: 0.95, opacity: 0, duration: 0.3 }, outTime);
         }
       } else {
@@ -561,8 +579,12 @@ function initScrollTrigger() {
         // If it's not the last section, fade it out before the next one enters
         if (index < sections.length - 1) {
           const outTime = index + 1.15; // Shifted exit
-          tl.to(section, { opacity: 0, pointerEvents: "none", duration: 0.35 }, outTime);
-          
+          tl.to(section, {
+            opacity: 0, pointerEvents: "none", duration: 0.35,
+            onComplete: () => { section.scrollTop = 0; },
+            onReverseComplete: () => { section.scrollTop = 0; }
+          }, outTime);
+
           // Coordinated slide out and scale down for children
           if (badge) tl.to(badge, { y: -30, scale: 0.95, opacity: 0, duration: 0.3 }, outTime);
           if (titles.length > 0) tl.to(titles, { y: -45, scale: 0.92, opacity: 0, duration: 0.3 }, outTime);
