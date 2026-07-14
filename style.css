@@ -170,6 +170,11 @@ body {
   flex-direction: column;
   z-index: 2;
   overflow-y: auto;
+  /* Stop a single scroll/trackpad gesture from bleeding past this section's own
+     scrollable content into the outer page scroll (which drives the section
+     transition). Without this, one fast swipe can blow through the content and
+     jump straight to the next section before it's been read. */
+  overscroll-behavior-y: contain;
   opacity: 0;
   pointer-events: none;
 }

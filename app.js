@@ -522,7 +522,10 @@ function initScrollTrigger() {
         }
       } else {
         // Generic animation loop for other sections
-        const inTime = index + 0.5;
+        // inTime matches the previous section's outTime (index + 0.15) so the
+        // incoming section crossfades in exactly as the outgoing one fades out,
+        // instead of leaving a dead gap where neither section is visible.
+        const inTime = index + 0.15;
         
         // Reveal parent section container
         tl.fromTo(section,
