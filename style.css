@@ -95,6 +95,12 @@ body {
   z-index: 1; /* Sits behind the WebGL particle canvas */
   opacity: 1.0;
   mix-blend-mode: screen; /* Blends black background seamlessly */
+  /* screen blending only ever brightens the composite, which was washing out
+     white text placed over the globe's brighter regions (clouds/land) -
+     darken the source image itself so that brightening lands at a readable
+     level. This is independent of the opacity GSAP animates, so it stays in
+     effect at every scroll step without fighting those tweens. */
+  filter: brightness(0.55);
 }
 
 @media (max-width: 768px) {
