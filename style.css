@@ -1238,6 +1238,19 @@ body {
   color: var(--text-muted);
 }
 
+.footer-bottom-flex a {
+  text-decoration: none;
+}
+
+.selimcan-dijital {
+  color: var(--text-muted);
+  transition: var(--transition-fast);
+}
+
+.footer-bottom-flex a:hover .selimcan-dijital {
+  color: var(--text-gray);
+}
+
 .tigin-creative {
   font-weight: 400;
   letter-spacing: 0.5px;
