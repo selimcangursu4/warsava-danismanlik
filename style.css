@@ -31,12 +31,6 @@
   scroll-behavior: smooth;
 }
 
-/* Toggled by the mobile touch-scroll handler (app.js) while a drag is in
-   progress, so its per-frame scroll updates apply instantly instead of each
-   one queuing its own smooth-scroll animation under the rule above. */
-.no-smooth-scroll {
-  scroll-behavior: auto;
-}
 
 body {
   background-color: var(--bg-primary);
@@ -182,12 +176,38 @@ body {
 }
 
 @media (max-width: 768px) {
+  /* Mobile layout mode: natural document flow instead of desktop's pinned,
+     scroll-jacked full-viewport overlays. Full-page scroll-jacking (crossfade
+     stacking + a single scroll-scrubbed master timeline) is inherently
+     unreliable on touch - inconsistent momentum, unreliable scroll chaining
+     through position:fixed wrappers, and viewport height that shifts as the
+     browser's address bar shows/hides. The standard fix used by most
+     immersive scrollytelling sites is to keep that treatment for desktop/
+     mouse only and give touch a plain, natively-scrolling page instead.
+     initMobileReveals() in app.js is the matching JS: it skips the master
+     timeline below this breakpoint and just fades/slides each section up
+     once as it's scrolled into view. */
+  #content-container {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+  }
+
   .section {
-    /* Mobile only: stop a single touch swipe from bleeding past this section's
-       own scrollable content into the outer page scroll (which drives the
-       section transition). Desktop mouse scrolling is left unrestricted and
-       can scroll/chain sections from anywhere on the page. */
-    overscroll-behavior-y: contain;
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    overflow-y: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #section-1.section {
+    min-height: 100svh;
   }
 }
 

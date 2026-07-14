@@ -8,7 +8,6 @@ gsap.registerPlugin(ScrollTrigger);
 document.addEventListener('DOMContentLoaded', () => {
   initThree();
   initNavigation();
-  initMobileSectionScroll();
   initConsultationForm();
   initVideoSlider();
   initVideoModal();
@@ -204,7 +203,15 @@ function initThree() {
 function initScrollTrigger() {
   const sections = document.querySelectorAll('.section');
   const navLinks = document.querySelectorAll('.nav-link');
-  
+
+  // Mobile gets a completely different, much simpler scroll model - see
+  // initMobileReveals() for why the pinned/scrubbed timeline below is
+  // desktop-only.
+  if (window.innerWidth < 768) {
+    initMobileReveals(sections, navLinks);
+    return;
+  }
+
   // Set body height dynamically based on sections + 1 substeps (8 sections + 1 substep = 900vh)
   document.body.style.height = ((sections.length + 1) * 100) + 'vh';
 
@@ -648,6 +655,86 @@ function initScrollTrigger() {
         }
       }
     }
+  });
+}
+
+/**
+ * Mobile scroll model: sections sit in normal document flow (see the
+ * `@media (max-width: 768px)` override on `.section` in style.css) instead of
+ * being pinned full-viewport overlays, so there's no single master timeline
+ * to scrub. Each section instead gets a lightweight one-shot reveal (fade +
+ * slide up) the first time it's scrolled into view, the 3D globe gets a
+ * simple time-based entrance instead of a scroll-linked one, and the progress
+ * bar / active nav link are driven off plain scroll position.
+ */
+function initMobileReveals(sections, navLinks) {
+  // The globe/earth overlay start at their desktop "giant, pushed down"
+  // initial pose (set in initThree/initScrollTrigger) because that's the
+  // `from` state of a scroll-scrubbed tween on desktop. Mobile has no such
+  // tween, so settle it into place once, on a timer, instead of leaving it
+  // stuck oversized off-screen.
+  gsap.to(particleSystem.position, { y: 0, x: 0, duration: 1.3, delay: 0.15, ease: "power3.out" });
+  gsap.to(particleSystem.scale, { x: 1, y: 1, z: 1, duration: 1.3, delay: 0.15, ease: "power3.out" });
+  gsap.to('#earth-overlay', { y: '0vh', x: '0vw', scale: 1, duration: 1.3, delay: 0.15, ease: "power3.out" });
+
+  // Maps a section's index to its corresponding nav link index (nav has one
+  // fewer entry than there are sections - "İletişime Geçin" isn't a direct
+  // nav target, "İletişim" points at the footer instead).
+  const sectionToNavIndex = { 0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 6: 5, 7: 6 };
+
+  sections.forEach((section, index) => {
+    if (index > 0) {
+      const targets = [
+        section.querySelector('.badge, .section-label'),
+        ...section.querySelectorAll('.main-title, .section-title'),
+        ...section.querySelectorAll('.subtitle, .paragraph, .section-subtitle'),
+        section.querySelector('.cta-buttons, .contact-badges'),
+        section.querySelector('.about-sidebar'),
+        ...section.querySelectorAll('.stat-card, .region-card, .service-card, .process-step, .form-wrapper, .testimonial-card, .footer-brand, .footer-contact, .footer-links, .video-slider-wrapper')
+      ].filter(Boolean);
+
+      if (targets.length > 0) {
+        gsap.set(targets, { opacity: 0, y: 30 });
+        ScrollTrigger.create({
+          trigger: section,
+          start: "top 85%",
+          once: true,
+          onEnter: () => gsap.to(targets, { opacity: 1, y: 0, duration: 0.6, stagger: 0.06, ease: "power2.out" })
+        });
+      }
+    }
+
+    const navIndex = sectionToNavIndex[index];
+    if (navIndex !== undefined) {
+      ScrollTrigger.create({
+        trigger: section,
+        start: "top center",
+        end: "bottom center",
+        onToggle: (self) => {
+          if (self.isActive) {
+            navLinks.forEach((link, i) => link.classList.toggle('active', i === navIndex));
+          }
+        }
+      });
+    }
+  });
+
+  // Progress bar, driven off plain document scroll instead of the
+  // (desktop-only) master ScrollTrigger's onUpdate.
+  const progressBar = document.getElementById('scroll-progress-bar');
+  const updateProgress = () => {
+    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (scrollable > 0 ? (window.scrollY / scrollable) * 100 : 0) + '%';
+  };
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+
+  // The video previews and other async content can shift section heights
+  // after ScrollTrigger's initial measurement, throwing off the reveal/nav
+  // trigger points - resync once everything has actually finished loading.
+  window.addEventListener('load', () => {
+    ScrollTrigger.refresh();
+    updateProgress();
   });
 }
 
@@ -1205,10 +1292,23 @@ function initNavigation() {
     });
   });
 
-  // Smooth scroll page to the index offset when clicking navigation links
+  // Smooth scroll to the target section when clicking navigation links.
+  // Desktop sections are fixed-height overlays, so a step-based scroll
+  // distance works there; mobile sections flow naturally at whatever height
+  // their content needs, so it scrolls to the section's real position instead.
   navLinks.forEach((link, index) => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
+
+      if (window.innerWidth < 768) {
+        const targetSection = document.querySelector(link.getAttribute('href'));
+        if (!targetSection) return;
+        const headerOffset = 70;
+        const targetY = targetSection.getBoundingClientRect().top + window.scrollY - headerOffset;
+        window.scrollTo({ top: Math.max(targetY, 0), behavior: 'smooth' });
+        return;
+      }
+
       const targetStep = index === 0 ? 0 : index + 1; // Map Anasayfa to step 0, others to index + 1
       const targetScrollY = targetStep * window.innerHeight;
       window.scrollTo({
@@ -1217,110 +1317,6 @@ function initNavigation() {
       });
     });
   });
-}
-
-/**
- * Native scroll chaining between a section's own overflow content and the
- * page scroll that drives section transitions isn't reliable on mobile
- * touch (the sections live inside a position:fixed wrapper, which mobile
- * browsers don't always chain through correctly) - a section's content could
- * end up skipped before it was fully scrolled. So on mobile only, we drive
- * both scrolls manually: a vertical drag first scrolls the active section's
- * own content, and only once that content hits its start/end does the same
- * drag continue on to move the page (which is what drives the section
- * transition). Desktop mouse-wheel scrolling is left completely untouched.
- */
-function initMobileSectionScroll() {
-  const AXIS_LOCK_DISTANCE = 10; // px of movement before we commit to vertical vs horizontal
-
-  // `behavior: 'instant'` is not an actual value of the standard ScrollBehavior
-  // enum (only "auto"/"smooth" are), so browsers can silently treat it as
-  // invalid and fall back to "auto" - which then obeys the global
-  // `scroll-behavior: smooth` rule in style.css and turns every one of these
-  // rapid per-move calls into a queued mini-animation that cancels the
-  // previous one, netting out to almost no visible movement. To get a
-  // guaranteed-instant scroll we instead toggle a class that overrides
-  // scroll-behavior to "auto" via CSS (higher specificity than the `*` rule)
-  // for the duration of the touch gesture, then use behavior: 'auto' calls.
-  const scroller = document.scrollingElement || document.documentElement;
-  let startX = 0;
-  let startY = 0;
-  let lastY = 0;
-  let activeSection = null;
-  let axisLocked = false;
-  let isVertical = false;
-  let pageMode = false; // once the inner section is exhausted, stay on page scroll for this gesture
-
-  function endGesture() {
-    scroller.classList.remove('no-smooth-scroll');
-    if (activeSection) activeSection.classList.remove('no-smooth-scroll');
-    activeSection = null;
-  }
-
-  document.addEventListener('touchstart', (e) => {
-    if (window.innerWidth >= 768) return;
-    const touch = e.touches[0];
-    startX = touch.clientX;
-    startY = touch.clientY;
-    lastY = startY;
-    axisLocked = false;
-    isVertical = false;
-    pageMode = false;
-
-    // Only take manual control when the section actually has content taller
-    // than the viewport to scroll through. Sections with nothing to scroll
-    // (like the hero) are left completely alone so the page transition keeps
-    // its native touch momentum/fling - hijacking those too was what made
-    // swiping past a short section feel slow and require repeated drags.
-    const target = e.target.closest('.section');
-    const hasInnerScroll = !!target && (target.scrollHeight - target.clientHeight > 1);
-    activeSection = hasInnerScroll ? target : null;
-    if (activeSection) {
-      scroller.classList.add('no-smooth-scroll');
-      activeSection.classList.add('no-smooth-scroll');
-    }
-  }, { passive: true });
-
-  document.addEventListener('touchend', endGesture, { passive: true });
-  document.addEventListener('touchcancel', endGesture, { passive: true });
-
-  document.addEventListener('touchmove', (e) => {
-    if (window.innerWidth >= 768 || !activeSection) return;
-    const touch = e.touches[0];
-    const currentY = touch.clientY;
-
-    if (!axisLocked) {
-      const deltaX = touch.clientX - startX;
-      const deltaY = startY - currentY;
-      if (Math.abs(deltaX) < AXIS_LOCK_DISTANCE && Math.abs(deltaY) < AXIS_LOCK_DISTANCE) return;
-      axisLocked = true;
-      isVertical = Math.abs(deltaY) >= Math.abs(deltaX);
-      if (!isVertical) return; // horizontal gesture (e.g. the video slider) - leave it alone
-    }
-    if (!isVertical) return;
-
-    const delta = lastY - currentY; // positive = finger moving up = reveal content below
-    lastY = currentY;
-    e.preventDefault();
-
-    if (pageMode) {
-      window.scrollTo({ left: window.scrollX, top: window.scrollY + delta, behavior: 'auto' });
-      return;
-    }
-
-    const maxScrollTop = activeSection.scrollHeight - activeSection.clientHeight;
-    const atBottom = activeSection.scrollTop >= maxScrollTop - 1;
-    const atTop = activeSection.scrollTop <= 0;
-
-    if (delta > 0 && !atBottom) {
-      activeSection.scrollTo({ top: activeSection.scrollTop + delta, left: 0, behavior: 'auto' });
-    } else if (delta < 0 && !atTop) {
-      activeSection.scrollTo({ top: activeSection.scrollTop + delta, left: 0, behavior: 'auto' });
-    } else {
-      pageMode = true;
-      window.scrollTo({ left: window.scrollX, top: window.scrollY + delta, behavior: 'auto' });
-    }
-  }, { passive: false });
 }
 
 /**
