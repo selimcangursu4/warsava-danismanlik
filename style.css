@@ -100,7 +100,7 @@ body {
      darken the source image itself so that brightening lands at a readable
      level. This is independent of the opacity GSAP animates, so it stays in
      effect at every scroll step without fighting those tweens. */
-  filter: brightness(0.55);
+  filter: brightness(0.32);
 }
 
 @media (max-width: 768px) {
