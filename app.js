@@ -1233,6 +1233,16 @@ function initNavigation() {
 function initMobileSectionScroll() {
   const AXIS_LOCK_DISTANCE = 10; // px of movement before we commit to vertical vs horizontal
 
+  // `behavior: 'instant'` is not an actual value of the standard ScrollBehavior
+  // enum (only "auto"/"smooth" are), so browsers can silently treat it as
+  // invalid and fall back to "auto" - which then obeys the global
+  // `scroll-behavior: smooth` rule in style.css and turns every one of these
+  // rapid per-move calls into a queued mini-animation that cancels the
+  // previous one, netting out to almost no visible movement. To get a
+  // guaranteed-instant scroll we instead toggle a class that overrides
+  // scroll-behavior to "auto" via CSS (higher specificity than the `*` rule)
+  // for the duration of the touch gesture, then use behavior: 'auto' calls.
+  const scroller = document.scrollingElement || document.documentElement;
   let startX = 0;
   let startY = 0;
   let lastY = 0;
@@ -1240,6 +1250,12 @@ function initMobileSectionScroll() {
   let axisLocked = false;
   let isVertical = false;
   let pageMode = false; // once the inner section is exhausted, stay on page scroll for this gesture
+
+  function endGesture() {
+    scroller.classList.remove('no-smooth-scroll');
+    if (activeSection) activeSection.classList.remove('no-smooth-scroll');
+    activeSection = null;
+  }
 
   document.addEventListener('touchstart', (e) => {
     if (window.innerWidth >= 768) return;
@@ -1251,7 +1267,14 @@ function initMobileSectionScroll() {
     axisLocked = false;
     isVertical = false;
     pageMode = false;
+    if (activeSection) {
+      scroller.classList.add('no-smooth-scroll');
+      activeSection.classList.add('no-smooth-scroll');
+    }
   }, { passive: true });
+
+  document.addEventListener('touchend', endGesture, { passive: true });
+  document.addEventListener('touchcancel', endGesture, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
     if (window.innerWidth >= 768 || !activeSection) return;
@@ -1273,11 +1296,7 @@ function initMobileSectionScroll() {
     e.preventDefault();
 
     if (pageMode) {
-      // { behavior: 'instant' } is required here to override the global
-      // `scroll-behavior: smooth` rule (style.css) - without it, every one of
-      // these rapid per-move calls queues its own smooth-scroll animation and
-      // cancels the previous one, which nets out to almost no movement at all.
-      window.scrollTo({ left: window.scrollX, top: window.scrollY + delta, behavior: 'instant' });
+      window.scrollTo({ left: window.scrollX, top: window.scrollY + delta, behavior: 'auto' });
       return;
     }
 
@@ -1286,12 +1305,12 @@ function initMobileSectionScroll() {
     const atTop = activeSection.scrollTop <= 0;
 
     if (delta > 0 && !atBottom) {
-      activeSection.scrollTo({ top: activeSection.scrollTop + delta, left: 0, behavior: 'instant' });
+      activeSection.scrollTo({ top: activeSection.scrollTop + delta, left: 0, behavior: 'auto' });
     } else if (delta < 0 && !atTop) {
-      activeSection.scrollTo({ top: activeSection.scrollTop + delta, left: 0, behavior: 'instant' });
+      activeSection.scrollTo({ top: activeSection.scrollTop + delta, left: 0, behavior: 'auto' });
     } else {
       pageMode = true;
-      window.scrollTo({ left: window.scrollX, top: window.scrollY + delta, behavior: 'instant' });
+      window.scrollTo({ left: window.scrollX, top: window.scrollY + delta, behavior: 'auto' });
     }
   }, { passive: false });
 }
