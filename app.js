@@ -401,9 +401,11 @@ function initScrollTrigger() {
     } else {
       // Subsequent sections fade in
       if (index === 3) {
-        // Section 4: Custom two-step animation sequence (Hizmetlerimiz)
+        // Section 4 (Hizmetlerimiz): header intro and services grid reveal together
+        // as one composition (previously the header faded fully out before the grid
+        // faded in, making the top and bottom feel like two disconnected moments).
         const inTimeCustom = index + 0.15; // 3.15 (exactly when Section 3 exits)
-        
+
         // Reveal Section 4 container
         tl.fromTo(section,
           { opacity: 0, pointerEvents: "none" },
@@ -415,7 +417,7 @@ function initScrollTrigger() {
         const grid = section.querySelector('.services-grid');
         const cards = section.querySelectorAll('.service-card');
 
-        // Step 1: Fade-in header intro texts (starts at 3.15, fully visible by 3.4)
+        // Header intro texts fade in first
         if (headerIntro) {
           const introBadge = headerIntro.querySelector('.section-label');
           const introTitle = headerIntro.querySelector('.section-title');
@@ -431,33 +433,24 @@ function initScrollTrigger() {
           if (introSubtitle) tl.fromTo(introSubtitle, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3 }, inTimeCustom + 0.08);
         }
 
-        // Step 2: Fade-out header intro texts (from 3.45 to 3.65)
-        // Note: no display:none here on purpose - keeping it in-flow (just invisible)
-        // means Section 4's total scroll height stays constant from the moment the
-        // section becomes active, so mobile touch-scroll chaining into the services
-        // grid below works reliably even on fast flicks (a height that changes mid-scroll
-        // causes the browser to keep routing the scroll to the outer page instead).
-        if (headerIntro) {
-          tl.to(headerIntro, { opacity: 0, y: -30, duration: 0.2 }, 3.45);
-        }
-
-        // Step 3: Fade-in cards grid and cards staggered (from 3.65 to 4.05)
+        // Cards grid fades in on the heels of the header (not after it disappears),
+        // so both are on screen together as a single, connected section.
         if (grid) {
           tl.fromTo(grid,
             { opacity: 0, y: 40 },
             { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
-            3.65
+            inTimeCustom + 0.1
           );
           if (cards.length > 0) {
             tl.fromTo(cards,
               { opacity: 0, y: 30, scale: 1.03 },
               { opacity: 1, y: 0, scale: 1.0, duration: 0.25, stagger: 0.03, ease: "power2.out" },
-              3.68
+              inTimeCustom + 0.13
             );
           }
         }
 
-        // Exit of Section 4
+        // Exit of Section 4: header and grid leave together
         if (index < sections.length - 1) {
           const outTime = index + 1.15; // 4.15
           tl.to(section, {
@@ -465,6 +458,7 @@ function initScrollTrigger() {
             onComplete: () => { section.scrollTop = 0; },
             onReverseComplete: () => { section.scrollTop = 0; }
           }, outTime);
+          if (headerIntro) tl.to(headerIntro, { y: -30, scale: 0.95, opacity: 0, duration: 0.3 }, outTime);
           if (grid) tl.to(grid, { y: -50, scale: 0.95, opacity: 0, duration: 0.3 }, outTime);
         }
       } else if (index === 4) {

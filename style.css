@@ -851,12 +851,8 @@ body {
 /* Section 4: Services */
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
-}
-
-.service-card:nth-child(7) {
-  grid-column: span 3;
 }
 
 @media (max-width: 992px) {
@@ -864,18 +860,12 @@ body {
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
   }
-  .service-card:nth-child(7) {
-    grid-column: span 2;
-  }
 }
 
 @media (max-width: 768px) {
   .services-grid {
     grid-template-columns: 1fr;
     gap: 16px;
-  }
-  .service-card:nth-child(7) {
-    grid-column: span 1;
   }
 }
 
@@ -1290,9 +1280,6 @@ body {
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
   }
-  .services-grid .service-card:last-child {
-    grid-column: span 2;
-  }
   .testimonials-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
@@ -1546,11 +1533,7 @@ body {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
-  .services-grid .service-card:last-child {
-    grid-column: span 1;
-  }
-  
+
   .process-timeline {
     grid-template-columns: 1fr;
     gap: 20px;
