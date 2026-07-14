@@ -1263,10 +1263,18 @@ function initMobileSectionScroll() {
     startX = touch.clientX;
     startY = touch.clientY;
     lastY = startY;
-    activeSection = e.target.closest('.section');
     axisLocked = false;
     isVertical = false;
     pageMode = false;
+
+    // Only take manual control when the section actually has content taller
+    // than the viewport to scroll through. Sections with nothing to scroll
+    // (like the hero) are left completely alone so the page transition keeps
+    // its native touch momentum/fling - hijacking those too was what made
+    // swiping past a short section feel slow and require repeated drags.
+    const target = e.target.closest('.section');
+    const hasInnerScroll = !!target && (target.scrollHeight - target.clientHeight > 1);
+    activeSection = hasInnerScroll ? target : null;
     if (activeSection) {
       scroller.classList.add('no-smooth-scroll');
       activeSection.classList.add('no-smooth-scroll');
