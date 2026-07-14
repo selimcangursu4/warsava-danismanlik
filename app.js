@@ -355,7 +355,7 @@ function initScrollTrigger() {
     const paragraphs = section.querySelectorAll('.subtitle, .paragraph, .section-subtitle');
     const cta = section.querySelector('.cta-buttons, .contact-badges');
     const sidebar = section.querySelector('.about-sidebar');
-    const gridItems = section.querySelectorAll('.stat-card, .region-card, .service-card, .process-step, .form-wrapper, .testimonial-card, .footer-brand, .footer-contact, .footer-links');
+    const gridItems = section.querySelectorAll('.stat-card, .region-card, .service-card, .process-step, .form-wrapper, .testimonial-card, .footer-brand, .footer-contact, .footer-links, .video-slider-wrapper');
 
     if (index === 0) {
       // First scroll step (0.0 to 1.0): Hero elements slide to the left in-place

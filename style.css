@@ -170,13 +170,18 @@ body {
   flex-direction: column;
   z-index: 2;
   overflow-y: auto;
-  /* Stop a single scroll/trackpad gesture from bleeding past this section's own
-     scrollable content into the outer page scroll (which drives the section
-     transition). Without this, one fast swipe can blow through the content and
-     jump straight to the next section before it's been read. */
-  overscroll-behavior-y: contain;
   opacity: 0;
   pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .section {
+    /* Mobile only: stop a single touch swipe from bleeding past this section's
+       own scrollable content into the outer page scroll (which drives the
+       section transition). Desktop mouse scrolling is left unrestricted and
+       can scroll/chain sections from anywhere on the page. */
+    overscroll-behavior-y: contain;
+  }
 }
 
 .section > .container {
