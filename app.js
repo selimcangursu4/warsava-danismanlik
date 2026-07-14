@@ -1273,7 +1273,11 @@ function initMobileSectionScroll() {
     e.preventDefault();
 
     if (pageMode) {
-      window.scrollTo(window.scrollX, window.scrollY + delta);
+      // { behavior: 'instant' } is required here to override the global
+      // `scroll-behavior: smooth` rule (style.css) - without it, every one of
+      // these rapid per-move calls queues its own smooth-scroll animation and
+      // cancels the previous one, which nets out to almost no movement at all.
+      window.scrollTo({ left: window.scrollX, top: window.scrollY + delta, behavior: 'instant' });
       return;
     }
 
@@ -1282,12 +1286,12 @@ function initMobileSectionScroll() {
     const atTop = activeSection.scrollTop <= 0;
 
     if (delta > 0 && !atBottom) {
-      activeSection.scrollTop += delta;
+      activeSection.scrollTo({ top: activeSection.scrollTop + delta, left: 0, behavior: 'instant' });
     } else if (delta < 0 && !atTop) {
-      activeSection.scrollTop += delta;
+      activeSection.scrollTo({ top: activeSection.scrollTop + delta, left: 0, behavior: 'instant' });
     } else {
       pageMode = true;
-      window.scrollTo(window.scrollX, window.scrollY + delta);
+      window.scrollTo({ left: window.scrollX, top: window.scrollY + delta, behavior: 'instant' });
     }
   }, { passive: false });
 }
