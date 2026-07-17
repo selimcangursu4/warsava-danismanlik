@@ -1112,6 +1112,13 @@ body {
   min-height: auto;
 }
 
+.footer-brand img {
+  height: 60px;
+  width: auto;
+  margin-bottom: 20px;
+  display: block;
+}
+
 .footer-brand h3 {
   font-size: 22px;
   font-weight: 800;
